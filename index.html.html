@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Memory Matching Game</title>
+
+  <style>
+    :root {
+      --card-size: 120px;
+      --primary: #4f46e5;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    header {
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+    }
+
+    .info {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* Mobile */
+    @media (max-width: 600px) {
+      main {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .card {
+      perspective: 1000px;
+      cursor: pointer;
+    }
+
+    .card-inner {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.6s;
+    }
+
+    .card.flip .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-front,
+    .card-back {
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      backface-visibility: hidden;
+    }
+
+    .card-front {
+      background: white;
+      border: 2px solid #e5e7eb;
+    }
+
+    .card-back {
+      background: var(--primary);
+      color: white;
+      transform: rotateY(180deg);
+    }
+
+    .card:hover .card-front {
+      background: #eef2ff;
+    }
+
+    footer {
+      margin-top: 20px;
+      color: #6b7280;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>🎴 Memory Matching Game</h1>
+    <div class="info">
+      <div>Lượt click: <strong id="moves">0</strong></div>
+      <button onclick="resetGame()">Reset</button>
+    </div>
+  </header>
+
+  <main id="gameBoard"></main>
+
+  <footer>
+    Ghép đúng tất cả 4 cặp để chiến thắng 🏆
+  </footer>
+
+  <script>
+    const icons = ['🍎', '🍌', '🍇', '🍉'];
+    let cards = [];
+    let firstCard = null;
+    let secondCard = null;
+    let lockBoard = false;
+    let moves = 0;
+    let matchedPairs = 0;
+
+    const board = document.getElementById('gameBoard');
+    const movesEl = document.getElementById('moves');
+
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function createBoard() {
+      board.innerHTML = '';
+      moves = 0;
+      matchedPairs = 0;
+      movesEl.textContent = 0;
+
+      cards = shuffle([...icons, ...icons]);
+
+      cards.forEach(icon => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.icon = icon;
+
+        card.innerHTML = `
+          <div class="card-inner">
+            <div class="card-front">?</div>
+            <div class="card-back">${icon}</div>
+          </div>
+        `;
+
+        card.addEventListener('click', () => flipCard(card));
+        board.appendChild(card);
+      });
+    }
+
+    function flipCard(card) {
+      if (lockBoard) return;
+      if (card === firstCard) return;
+
+      card.classList.add('flip');
+
+      if (!firstCard) {
+        firstCard = card;
+        return;
+      }
+
+      secondCard = card;
+      moves++;
+      movesEl.textContent = moves;
+
+      checkMatch();
+    }
+
+    function checkMatch() {
+      const isMatch =
+        firstCard.dataset.icon === secondCard.dataset.icon;
+
+      if (isMatch) {
+        matchedPairs++;
+        resetTurn();
+
+        if (matchedPairs === icons.length) {
+          setTimeout(() => {
+            alert(`🎉 Bạn thắng sau ${moves} lượt click!`);
+          }, 300);
+        }
+      } else {
+        lockBoard = true;
+        setTimeout(() => {
+          firstCard.classList.remove('flip');
+          secondCard.classList.remove('flip');
+          resetTurn();
+        }, 800);
+      }
+    }
+
+    function resetTurn() {
+      [firstCard, secondCard] = [null, null];
+      lockBoard = false;
+    }
+
+    function resetGame() {
+      firstCard = null;
+      secondCard = null;
+      lockBoard = false;
+      createBoard();
+    }
+
+    createBoard();
+  </script>
+</body>
+</html>
